@@ -447,4 +447,4 @@ function f.RegisterUnload()
     end
 end
 
-return a
+return f
