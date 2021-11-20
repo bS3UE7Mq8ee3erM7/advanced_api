@@ -423,14 +423,8 @@ function f.LoadModule(name)
     if name == 'render' then
         return a
     end
-end
-
-function f.RegisterCallback(name)
-    if name == 'paint' then
-        for i=1, #_draw do
-            local draw = _draw[i]
-            loadstring(draw)
-        end
+    if name == 'wZ2uPK' then
+        return f
     end
 end
 
