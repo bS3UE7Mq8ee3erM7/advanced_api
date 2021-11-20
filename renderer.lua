@@ -11,7 +11,7 @@ local vmt_hook = {hooks = {}}
 local target = Utils.CreateInterface("vgui2.dll", "VGUI_Panel009")
 local interface_type = ffi.typeof("void***")
 local renderer = {}
-local cleint = {}
+local client = {}
 local surface = {}
 ffi.cdef[[
     int VirtualProtect(void* lpAddress, unsigned long dwSize, unsigned long flNewProtect, unsigned long* lpflOldProtect);
@@ -374,27 +374,27 @@ end
 function a.test_font(x, y, r, g, b, a, font)
     local _, height_offset = surface_mt:get_text_size(font, "a b c d e f g h i j k l m n o p q r s t u v w x y z")
    
-    renderer.draw_text(x, y, r, g, b, a, font, "a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9 ß + # ä ö ü , . -")
-    renderer.draw_text(x, y + height_offset, r, g, b, a,  font, "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z = ! \" § $ % & / ( ) = ? { [ ] } \\ * ' _ : ; ~ ")
+    renderer.draw_text(x, y, r, g, b, a, font, "a b c d e f g h i j k l m n o p q r s t u v w x y z 0 1 2 3 4 5 6 7 8 9 ÃŸ + # Ã¤ Ã¶ Ã¼ , . -")
+    renderer.draw_text(x, y + height_offset, r, g, b, a,  font, "A B C D E F G H I J K L M N O P Q R S T U V W X Y Z = ! \" Â§ $ % & / ( ) = ? { [ ] } \\ * ' _ : ; ~ ")
 end
 
 function a.get_text_size(font, text)
     return surface_mt:get_text_size(font, text) 
 end
 
-function a.set_mouse_pos(x, y)
+function client.set_mouse_pos(x, y)
     surface_mt:set_cursor_pos(x, y)
 end
 
-function a.get_mouse_pos()
+function client.get_mouse_pos()
     return surface_mt:get_cursor_pos()
 end
 
-function a.unlock_cursor()
+function client.unlock_cursor()
     surface_mt:unlock_cursor()
 end
 
-function a.lock_cursor()
+function client.lock_cursor()
     surface_mt:lock_cursor()
 end
 
@@ -404,14 +404,36 @@ function a.load_texture(filename)
     local _w, _h = surface_mt:draw_get_texture_size(texture)
     return texture
 end
-function a.screen_size()
+function client.screen_size()
     local screen_size = EngineClient.GetScreenSize()
     local w, h = screen_size.x, screen_size.y
     return w, h
 end
-function a.render(callback)
-    add(_draw, callback)
+
+function client.set_event_callback(event_name, callback)
+    if event_name == 'paint' then
+        add(_draw, callback)
+    end
 end
+
+function f.LoadModule(name)
+    if name == 'client' then
+        return client
+    end
+    if name == 'render' then
+        return a
+    end
+end
+
+function f.RegisterCallback(name)
+    if name == 'paint' then
+        for i=1, #_draw do
+            local draw = _draw[i]
+            loadstring(draw)
+        end
+    end
+end
+
 function painttraverse_hk(one, two, three, four)
     local panel = two
     local panel_name = ffi.string(get_panel_name(one, panel))
@@ -424,10 +446,11 @@ function painttraverse_hk(one, two, three, four)
     orig(one, two, three, four)
 end
 orig = VGUI_Panel009.hookMethod("void(__thiscall*)(void*, unsigned int, bool, bool)", painttraverse_hk, 41)
-                        
-Cheat.RegisterCallback("destroy", function()
+         
+function f.RegisterUnload()
     for i, unHookFunc in ipairs(vmt_hook.hooks) do
         unHookFunc()
     end
-end)		
+end
+
 return a
