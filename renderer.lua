@@ -11,7 +11,7 @@ local vmt_hook = {hooks = {}}
 local target = Utils.CreateInterface("vgui2.dll", "VGUI_Panel009")
 local interface_type = ffi.typeof("void***")
 local renderer = {}
-local client = {}
+local cleint = {}
 local surface = {}
 ffi.cdef[[
     int VirtualProtect(void* lpAddress, unsigned long dwSize, unsigned long flNewProtect, unsigned long* lpflOldProtect);
@@ -382,19 +382,19 @@ function a.get_text_size(font, text)
     return surface_mt:get_text_size(font, text) 
 end
 
-function client.set_mouse_pos(x, y)
+function a.set_mouse_pos(x, y)
     surface_mt:set_cursor_pos(x, y)
 end
 
-function client.get_mouse_pos()
+function a.get_mouse_pos()
     return surface_mt:get_cursor_pos()
 end
 
-function client.unlock_cursor()
+function a.unlock_cursor()
     surface_mt:unlock_cursor()
 end
 
-function client.lock_cursor()
+function a.lock_cursor()
     surface_mt:lock_cursor()
 end
 
@@ -404,36 +404,14 @@ function a.load_texture(filename)
     local _w, _h = surface_mt:draw_get_texture_size(texture)
     return texture
 end
-function client.screen_size()
+function a.screen_size()
     local screen_size = EngineClient.GetScreenSize()
     local w, h = screen_size.x, screen_size.y
     return w, h
 end
-
-function client.set_event_callback(event_name, callback)
-    if event_name == 'paint' then
-        add(_draw, callback)
-    end
+function a.render(callback)
+    add(_draw, callback)
 end
-
-function f.LoadModule(name)
-    if name == 'client' then
-        return client
-    end
-    if name == 'render' then
-        return a
-    end
-end
-
-function f.RegisterCallback(name)
-    if name == 'paint' then
-        for i=1, #_draw do
-            local draw = _draw[i]
-            loadstring(draw)
-        end
-    end
-end
-
 function painttraverse_hk(one, two, three, four)
     local panel = two
     local panel_name = ffi.string(get_panel_name(one, panel))
@@ -446,11 +424,10 @@ function painttraverse_hk(one, two, three, four)
     orig(one, two, three, four)
 end
 orig = VGUI_Panel009.hookMethod("void(__thiscall*)(void*, unsigned int, bool, bool)", painttraverse_hk, 41)
-         
-function f.RegisterUnload()
+                        
+Cheat.RegisterCallback("destroy", function()
     for i, unHookFunc in ipairs(vmt_hook.hooks) do
         unHookFunc()
     end
-end
-
+end)		
 return a
